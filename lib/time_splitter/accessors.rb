@@ -35,7 +35,14 @@ module TimeSplitter
 
         define_method("#{attr}_time=") do |time|
           return unless time.present?
-          time = Time.parse(time) unless time.is_a?(Date) || time.is_a?(Time)
+          case time
+          when Date, Time
+            # do nothing
+          when Hash
+            time = Time.new(*time.values)
+          else
+            time = Time.parse(time)
+          end
           self.send("#{attr}=", self.send("#{attr}_or_new").change(hour: time.hour, min: time.min))
         end
 
