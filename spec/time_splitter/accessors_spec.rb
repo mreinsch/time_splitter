@@ -1,4 +1,5 @@
 require 'active_support/all'
+require 'active_record'
 require_relative "../../lib/time_splitter/accessors.rb"
 
 describe TimeSplitter::Accessors do
@@ -212,6 +213,26 @@ describe TimeSplitter::Accessors do
           expect(model.starts_at).to eq Time.new(2222, 12, 22, 13, 44, 0, '+00:00')
         end
       end
+    end
+  end
+
+  describe 'active_record_integration' do
+    before :all do
+      ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+      ActiveRecord::Schema.define do
+        self.verbose = false
+        create_table :events, :force => true do |t|
+          t.datetime 'starts_at'
+        end
+      end
+      class Event < ActiveRecord::Base
+        extend TimeSplitter::Accessors
+        split_accessor :starts_at
+      end
+    end
+    it "handles multiparameter assignment" do
+      event = Event.new("starts_at_date"=>"2015-05-14", "starts_at_time(1i)"=>"2015", "starts_at_time(2i)"=>"5", "starts_at_time(3i)"=>"14", "starts_at_time(4i)"=>"21", "starts_at_time(5i)"=>"00")
+      expect(event.starts_at).to eq(Time.new(2015, 5, 14, 21, 0, 0, '+00:00'))
     end
   end
 end
